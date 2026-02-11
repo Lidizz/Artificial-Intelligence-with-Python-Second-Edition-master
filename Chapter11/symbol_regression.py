@@ -1,3 +1,4 @@
+import matplotlib._tight_layout
 import operator
 import math
 import random
@@ -83,3 +84,6 @@ if __name__ == "__main__":
             probab_crossover, probab_mutate, num_generations, 
             stats=mstats, halloffame=hall_of_fame, verbose=True)
 
+# This code implements Symbolic Regression using Genetic Programming, which is a way for a computer to "evolve" a mathematical formula that best fits a set of data points. Think of it like natural selection for math equations: the code starts with a large population of random, messy formulas (built from basic blocks like addition, multiplication, sine, cosine, etc.) and tests them to see how close their answers are to the target curve (specifically $2x^3 - 3x^2 + 4x - 1$). It then keeps the most accurate formulas and "breeds" them—mixing their parts together or slightly mutating them—over many generations to gradually improve accuracy until it discovers the perfect equation that explains the data.
+
+# Example: Imagine you are given the number sequence 2, 4, 8, 16 but don't know the rule behind it. This code would start by randomly guessing formulas like "$x + 10$" (wrong) or "$3 * x$" (close). After checking the errors, it might take a "multiply" operator from one guess and an "x" from another to evolve the correct formula "$2^x$", solving the puzzle without being explicitly told the answer.

@@ -66,7 +66,7 @@ f1 = cross_val_score(classifier, X, y, scoring='f1_weighted', cv=3)
 print("F1 score: " + str(round(100*f1.mean(), 2)) + "%")
 
 # Predict output for a test datapoint
-input_data = ['37', 'Private', '215646', 'HS-grad', '9', 'Never-married', 'Handlers-cleaners', 'Not-in-family', 'White', 'Male', '0', '0', '40', 'United-States']
+input_data = ['37', 'Private', '215646', 'Doctorate', '9', 'Married-civ-spouse', 'Handlers-cleaners', 'Husband', 'White', 'Male', '0', '0', '40', 'United-States']
 
 # Encode test datapoint
 input_data_encoded = [-1] * len(input_data)

@@ -40,7 +40,7 @@ print("R2 score =", round(sm.r2_score(y_test, y_test_pred), 2))
 # Polynomial regression
 polynomial = PolynomialFeatures(degree=10)
 X_train_transformed = polynomial.fit_transform(X_train)
-datapoint = [[7.75, 6.35, 5.56]]
+datapoint = [[1.75, 6.35, 5.56]]
 poly_datapoint = polynomial.fit_transform(datapoint)
 
 poly_linear_model = linear_model.LinearRegression()

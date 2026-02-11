@@ -55,4 +55,3 @@ if __name__=='__main__':
             backtrack(problem, variable_heuristic=HIGHEST_DEGREE_VARIABLE, 
             value_heuristic=LEAST_CONSTRAINING_VALUE))
     print('\nMinimum conflicts:', min_conflicts(problem))
-

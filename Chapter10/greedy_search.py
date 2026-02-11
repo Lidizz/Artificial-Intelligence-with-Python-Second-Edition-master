@@ -58,3 +58,8 @@ if __name__=='__main__':
     print('\nPath to the solution:')
     for item in output.path():
         print(item)
+
+# Explanation of the above code:
+# The code uses the greedy algorithm to find the shortest path from the initial state to the goal state.
+# The heuristic function calculates the distance between the current state and the goal state.
+# The greedy algorithm always chooses the action that minimizes the heuristic function.

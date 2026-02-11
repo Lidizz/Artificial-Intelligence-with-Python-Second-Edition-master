@@ -1,6 +1,9 @@
 import numpy as np
 from sklearn import preprocessing
 
+# fix random seed
+np.random.seed(42)
+
 # Sample input labels
 input_labels = ['red', 'black', 'red', 'green', 'black', 'yellow', 'white']
 

@@ -19,8 +19,8 @@ with open(input_file, 'r') as f:
 symbols, names = np.array(list(company_symbols_map.items())).T
 
 # Load the historical stock quotes 
-start_date = "2019-01-01"
-end_date = "2019-01-31"
+start_date = "2025-01-01"
+end_date = "2025-02-28"
 
 # Use yf.download for batch downloading which is faster and more reliable
 # We need to handle cases where data might be missing
