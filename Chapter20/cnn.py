@@ -1,114 +1,84 @@
-import argparse
+"""
+CNN for MNIST digit classification
+===================================
+Builds a Convolutional Neural Network using TensorFlow/Keras
+to classify handwritten digits from the MNIST dataset.
+
+Architecture (same as the original):
+  Conv2D(32, 5x5) -> MaxPool(2x2) ->
+  Conv2D(64, 5x5) -> MaxPool(2x2) ->
+  Flatten -> Dense(1024) -> Dropout(0.5) -> Dense(10)
+
+Usage:
+  python cnn.py
+"""
 
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
 
-def get_weights(shape):
-    data = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(data)
+# ─── Load MNIST data ───────────────────────────────────────────────
+print("Loading MNIST data...")
+(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-def get_biases(shape):
-    data = tf.constant(0.1, shape=shape)
-    return tf.Variable(data)
+# Reshape to [samples, 28, 28, 1] and normalize to [0, 1]
+x_train = x_train.reshape(-1, 28, 28, 1).astype("float32") / 255.0
+x_test  = x_test.reshape(-1, 28, 28, 1).astype("float32") / 255.0
 
-def create_layer(shape):
-    # Get the weights and biases 
-    W = get_weights(shape)
-    b = get_biases([shape[-1]])
+# Convert labels to one-hot encoding
+y_train = keras.utils.to_categorical(y_train, 10)
+y_test  = keras.utils.to_categorical(y_test, 10)
 
-    return W, b
+# ─── Build the CNN model ──────────────────────────────────────────
+model = keras.Sequential([
+    # First convolutional layer: 32 filters, 5x5 kernel, ReLU
+    layers.Conv2D(32, (5, 5), activation='relu', padding='same',
+                  input_shape=(28, 28, 1)),
+    layers.MaxPooling2D(pool_size=(2, 2)),
 
-def convolution_2d(x, W):
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], 
-            padding='SAME')
+    # Second convolutional layer: 64 filters, 5x5 kernel, ReLU
+    layers.Conv2D(64, (5, 5), activation='relu', padding='same'),
+    layers.MaxPooling2D(pool_size=(2, 2)),
 
-def max_pooling(x):
-    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], 
-            strides=[1, 2, 2, 1], padding='SAME')
+    # Flatten and fully connected layer
+    layers.Flatten(),                       # 7 * 7 * 64 = 3136
+    layers.Dense(1024, activation='relu'),
+    layers.Dropout(0.5),
 
-# Get the MNIST data
-mnist = input_data.read_data_sets("./mnist_data", one_hot=True)
+    # Output layer: 10 classes (digits 0-9)
+    layers.Dense(10, activation='softmax')
+])
 
-# The images are 28x28, so create the input layer 
-# with 784 neurons (28x28=784) 
-x = tf.placeholder(tf.float32, [None, 784])
+model.summary()
 
-# Reshape 'x' into a 4D tensor 
-x_image = tf.reshape(x, [-1, 28, 28, 1])
+# ─── Compile the model ────────────────────────────────────────────
+model.compile(
+    optimizer=keras.optimizers.Adam(learning_rate=1e-4),
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
 
-# Define the first convolutional layer
-W_conv1, b_conv1 = create_layer([5, 5, 1, 32])
-
-# Convolve the image with weight tensor, add the 
-# bias, and then apply the ReLU function
-h_conv1 = tf.nn.relu(convolution_2d(x_image, W_conv1) + b_conv1)
-
-# Apply the max pooling operator
-h_pool1 = max_pooling(h_conv1)
-
-# Define the second convolutional layer
-W_conv2, b_conv2 = create_layer([5, 5, 32, 64])
-
-# Convolve the output of previous layer with the 
-# weight tensor, add the bias, and then apply 
-# the ReLU function
-h_conv2 = tf.nn.relu(convolution_2d(h_pool1, W_conv2) + b_conv2)
-
-# Apply the max pooling operator
-h_pool2 = max_pooling(h_conv2)
-
-# Define the fully connected layer
-W_fc1, b_fc1 = create_layer([7 * 7 * 64, 1024])
-
-# Reshape the output of the previous layer
-h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
-
-# Multiply the output of previous layer by the 
-# weight tensor, add the bias, and then apply 
-# the ReLU function
-h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
-
-# Define the dropout layer using a probability placeholder
-# for all the neurons
-keep_prob = tf.placeholder(tf.float32)
-h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-
-# Define the readout layer (output layer)
-W_fc2, b_fc2 = create_layer([1024, 10])
-y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
-
-# Define the entropy loss and the optimizer
-y_loss = tf.placeholder(tf.float32, [None, 10])
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_conv, labels=y_loss))
-optimizer = tf.train.AdamOptimizer(1e-4).minimize(loss)
-
-# Define the accuracy computation
-predicted = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_loss, 1))
-accuracy = tf.reduce_mean(tf.cast(predicted, tf.float32))
-
-# Create and run a session
-sess = tf.InteractiveSession()
-init = tf.initialize_all_variables()
-sess.run(init)
-
-# Start training
+# ─── Train the model ──────────────────────────────────────────────
 num_iterations = 2000
 batch_size = 75
-print('\nTraining the model....')
-for i in range(num_iterations):
-    # Get the next batch of images
-    batch = mnist.train.next_batch(batch_size)
 
-    # Print progress
-    if i % 50 == 0:
-        cur_accuracy = accuracy.eval(feed_dict = {
-                x: batch[0], y_loss: batch[1], keep_prob: 1.0})
-        print('Iteration', i, ', Accuracy =', cur_accuracy)
-        
-    # Train on the current batch
-    optimizer.run(feed_dict = {x: batch[0], y_loss: batch[1], keep_prob: 0.5})
+# Calculate equivalent epochs: 2000 iterations * 75 batch / 60000 samples ≈ 2.5 epochs
+epochs = max(1, (num_iterations * batch_size) // len(x_train))
 
-# Compute accuracy using test data
-print('Test accuracy =', accuracy.eval(feed_dict = {
-        x: mnist.test.images, y_loss: mnist.test.labels, 
-        keep_prob: 1.0}))
+print(f"\nTraining the model for {epochs} epochs "
+      f"(~{num_iterations} iterations with batch size {batch_size})...\n")
+
+model.fit(
+    x_train, y_train,
+    batch_size=batch_size,
+    epochs=epochs,
+    validation_split=0.1,
+    verbose=1
+)
+
+# ─── Evaluate on test data ────────────────────────────────────────
+test_loss, test_accuracy = model.evaluate(x_test, y_test, verbose=0)
+print(f"\nTest accuracy = {test_accuracy:.4f}")
+
+# plot:

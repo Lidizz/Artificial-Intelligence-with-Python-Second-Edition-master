@@ -13,21 +13,22 @@ if __name__=='__main__':
     args = build_arg_parser().parse_args()
     input_env = args.input_env
 
-    name_map = {'cartpole': 'CartPole-v0', 
+    name_map = {'cartpole': 'CartPole-v1', 
                 'mountaincar': 'MountainCar-v0',
-                'pendulum': 'Pendulum-v0',
-                'taxi': 'Taxi-v1',
-                'lake': 'FrozenLake-v0'}
+                'pendulum': 'Pendulum-v1',
+                'taxi': 'Taxi-v3',
+                'lake': 'FrozenLake-v1'}
 
     # Create the environment and reset it
-    env = gym.make(name_map[input_env])
+    env = gym.make(name_map[input_env], render_mode='human')
     env.reset()
 
     # Iterate 1000 times
     for _ in range(1000):
-        # Render the environment
-        env.render()
-
         # take a random action
-        env.step(env.action_space.sample()) 
+        observation, reward, terminated, truncated, info = env.step(env.action_space.sample())
+
+        # Reset if episode is done
+        if terminated or truncated:
+            env.reset()
 

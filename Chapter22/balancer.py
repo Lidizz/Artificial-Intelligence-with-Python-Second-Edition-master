@@ -13,17 +13,17 @@ if __name__=='__main__':
     args = build_arg_parser().parse_args()
     input_env = args.input_env
 
-    name_map = {'cartpole': 'CartPole-v0', 
+    name_map = {'cartpole': 'CartPole-v1', 
                 'mountaincar': 'MountainCar-v0',
-                'pendulum': 'Pendulum-v0'}
+                'pendulum': 'Pendulum-v1'}
 
     # Create the environment 
-    env = gym.make(name_map[input_env])
+    env = gym.make(name_map[input_env], render_mode='human')
 
     # Start iterating 
     for _ in range(20):
         # Reset the environment
-        observation = env.reset()
+        observation, info = env.reset()
 
         # Iterate 100 times
         for i in range(100):
@@ -38,9 +38,9 @@ if __name__=='__main__':
 
             # Extract the observation, reward, status and 
             # other info based on the action taken
-            observation, reward, done, info = env.step(action)
+            observation, reward, terminated, truncated, info = env.step(action)
             
             # Check if it's done
-            if done:
+            if terminated or truncated:
                 print('Episode finished after {} timesteps'.format(i+1))
                 break

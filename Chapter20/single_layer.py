@@ -1,46 +1,64 @@
+"""
+Single-layer neural network for MNIST classification
+=====================================================
+A simple single-layer (logistic regression) model using
+TensorFlow/Keras to classify handwritten digits.
+
+Architecture: Input(784) -> Dense(10, softmax)
+
+Usage:
+  python single_layer.py
+"""
+
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
 
 # Get the MNIST data
-mnist = input_data.read_data_sets("./mnist_data", one_hot=True)
+print("Loading MNIST data...")
+(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-# The images are 28x28, so create the input layer 
-# with 784 neurons (28x28=784) 
-x = tf.placeholder(tf.float32, [None, 784])
+# The images are 28x28, so flatten to 784 and normalize to [0, 1]
+x_train = x_train.reshape(-1, 784).astype("float32") / 255.0
+x_test  = x_test.reshape(-1, 784).astype("float32") / 255.0
 
-# Create a layer with weights and biases. There are 10 distinct 
-# digits, so the output layer should have 10 classes
-W = tf.Variable(tf.zeros([784, 10]))
-b = tf.Variable(tf.zeros([10]))
+# Convert labels to one-hot encoding (10 distinct digits)
+y_train = keras.utils.to_categorical(y_train, 10)
+y_test  = keras.utils.to_categorical(y_test, 10)
 
-# Create the equation for 'y' using y = W*x + b
-y = tf.matmul(x, W) + b
+# Create a single-layer model with weights and biases
+# There are 10 distinct digits, so the output layer has 10 classes
+model = keras.Sequential([
+    layers.Dense(10, activation='softmax', input_shape=(784,))
+])
 
-# Define the entropy loss and the gradient descent optimizer
-y_loss = tf.placeholder(tf.float32, [None, 10])
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, labels=y_loss))
-optimizer = tf.train.GradientDescentOptimizer(0.5).minimize(loss)
+model.summary()
 
-# Initialize all the variables 
-init = tf.initialize_all_variables()
-
-# Create a session
-session = tf.Session()
-session.run(init)
+# Define the loss and the gradient descent optimizer
+model.compile(
+    optimizer=keras.optimizers.SGD(learning_rate=0.5),
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
 
 # Start training
 num_iterations = 1200
 batch_size = 90
-for _ in range(num_iterations):
-    # Get the next batch of images
-    x_batch, y_batch = mnist.train.next_batch(batch_size)
 
-    # Train on this batch of images
-    session.run(optimizer, feed_dict = {x: x_batch, y_loss: y_batch})
+# Calculate equivalent epochs: 1200 iterations * 90 batch / 60000 samples ≈ 1.8 epochs
+epochs = max(1, (num_iterations * batch_size) // len(x_train))
+
+print(f"\nTraining the model for {epochs} epoch(s) "
+      f"(~{num_iterations} iterations with batch size {batch_size})...\n")
+
+model.fit(
+    x_train, y_train,
+    batch_size=batch_size,
+    epochs=epochs,
+    verbose=1
+)
 
 # Compute the accuracy using test data
-predicted = tf.equal(tf.argmax(y, 1), tf.argmax(y_loss, 1))
-accuracy = tf.reduce_mean(tf.cast(predicted, tf.float32))
-print('\nAccuracy =', session.run(accuracy, feed_dict = {
-        x: mnist.test.images, 
-        y_loss: mnist.test.labels}))
+test_loss, test_accuracy = model.evaluate(x_test, y_test, verbose=0)
+print(f"\nAccuracy = {test_accuracy:.4f}")
